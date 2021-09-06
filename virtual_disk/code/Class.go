@@ -128,9 +128,42 @@ func (cn CommandManage) CreateCommand() {
 }
 
 type Split struct {
+	CommandElement []string
+}
+
+func (s Split) SplitCommand() {
 
 }
 
-func (s Split) CreateCommand() {
+type TypeAnalyze struct {
+	Commandtype int
+}
+
+func (ta TypeAnalyze) GetCommandType() {
 
 }
+
+type ParameterAnalyze struct {
+	Commandpara byte
+}
+
+func (pa ParameterAnalyze) GetCommandParameter() {
+
+}
+
+type PathAnalyze struct {
+	Commandpath []string
+}
+
+func (paa PathAnalyze ) GetCommandPath() {
+
+}
+
+type FormatAnalyze struct {
+	CommandFormat bool
+}
+
+func (fa FormatAnalyze ) JudgeFormat() {
+
+}
+
