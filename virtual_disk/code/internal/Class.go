@@ -1,4 +1,4 @@
-package Class
+package internal
 
 
 type VirtualDiskManageSystem struct {
@@ -11,8 +11,8 @@ func (vdms VirtualDiskManageSystem) VirtualDiskManage() {
 
 type VirtualDisk struct {
 	CommandManageSystem CommandManage
-	RootContents Contents
-	WorkingPath []string
+	RootContents        Contents
+	WorkingPath         []string
 }//虚拟磁盘类
 
 func (vd VirtualDisk) Execute() {
@@ -155,7 +155,7 @@ type PathAnalyze struct {
 	Commandpath []string
 }
 
-func (paa PathAnalyze ) GetCommandPath() {
+func (paa PathAnalyze) GetCommandPath() {
 
 }
 
@@ -163,7 +163,7 @@ type FormatAnalyze struct {
 	CommandFormat bool
 }
 
-func (fa FormatAnalyze ) JudgeFormat() {
+func (fa FormatAnalyze) JudgeFormat() {
 
 }
 
