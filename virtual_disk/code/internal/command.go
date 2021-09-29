@@ -1,12 +1,10 @@
 package internal
 
 type Command struct {
-	TypeAnalyze
-	ParameterAnalyze
+	commandname string
 }
 
 func (cmd Command) CommandExecute() {
-
 }
 
 type Dir struct {
@@ -17,7 +15,12 @@ type Md struct {
 	Command
 }
 
+
 type Cd struct {
+	Command
+}
+
+type Touch struct {
 	Command
 }
 
@@ -54,5 +57,5 @@ type Load struct {
 }
 
 type Cls struct {
-
+	Command
 }
