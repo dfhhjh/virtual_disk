@@ -29,8 +29,6 @@ func (cls Cls) CommandExecute(vd *VirtualDisk){
 	cmd := exec.Command("cmd", "/c", "cls")
 	cmd.Stdout = os.Stdout
 	cmd.Run()
-	vd.UpdateCurrentFolder(&vd.RootComponent)
-	OutputRootDrive()
-	vd.Execute()
+	vd.Restart()
 }
 

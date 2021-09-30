@@ -2,7 +2,8 @@ package internal
 
 import "fmt"
 
-func (cd Cd) CommandExecute(vd *VirtualDisk, typ int, abspath string) {
+func (cd Cd) CommandExecute(vd *VirtualDisk, typ int, path string, commandmanage CommandManage) {
+	abspath := commandmanage.ConvertRelaivePathToAbsolutePath(vd, path)
 	var changefolder = &Component{}
 	pathelem := SplitPath(abspath)
 	switch typ{

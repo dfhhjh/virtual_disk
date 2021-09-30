@@ -2,9 +2,11 @@ package internal
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"strings"
 )
+
 
 func (load Load) CommandExecute(vd *VirtualDisk, path string){
 	var sr SerializeRecord
@@ -12,7 +14,11 @@ func (load Load) CommandExecute(vd *VirtualDisk, path string){
 		path = strings.TrimPrefix(path,"@")
 	}
 	vd.UpdateCurrentFolder(&vd.RootComponent)
-	data,_ := ioutil.ReadFile(path)
+	data,error := ioutil.ReadFile(path)
+	if error != nil {
+		fmt.Println(error)
+		vd.Restart()
+	}
 	json.Unmarshal(data, &sr)
 	for i := 0; i < sr.Size; i++{
 		var node = &Component{}
@@ -21,12 +27,8 @@ func (load Load) CommandExecute(vd *VirtualDisk, path string){
 		if sr.IsFoLder[i] == true{
 			node.AddFolder(vd, pathelem)
 		}else{
-			node.TouchFile(vd, pathelem)
+			node.LoadFile(vd, pathelem, sr.Content[i])
 		}
-		node.Content = sr.Content[i]
-		node.FileLength = len(node.Content)
 	}
-	vd.UpdateCurrentFolder(&vd.RootComponent)
-	OutputRootDrive()
-	vd.Execute()
+	vd.Restart()
 }

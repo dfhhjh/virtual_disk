@@ -2,6 +2,7 @@ package internal
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 	"strings"
 )
@@ -75,16 +76,22 @@ func (cm CommandManage) GetCommandType(itd bool, hwc bool) int{ //将命令分�
 	return 8
 }
 
-var CommandList = [14]string{dir, md , rd, cd, touch, del, copy, ren, move, mklink, save, load, cls}
+var CommandList = [12]string{dir, md , rd, cd, touch, del, copy, ren, move, save, load, cls}
 
-func (cm CommandManage) SeparateCommand(cs string) (string,string){ //返回值为带参数的路径和命令
+func (cm CommandManage) SeparateCommand(cs string,vd *VirtualDisk) (string,string){ //返回值为带参数的路径和命令
 	cs = strings.TrimSuffix(cs,"\n" )
+	var match bool
 	for _,v := range CommandList{
 		if strings.HasPrefix(cs, v) { //判断字符串是不是以字符串v开头
 			cs = strings.TrimPrefix(cs,v)
 			cs = strings.TrimPrefix(cs, " ")
+			match = true
 			return  cs, v//返回去掉v的字符串
 		}
+	}
+	if match == false{
+		fmt.Println("命令不正确")
+		vd.Restart()
 	}
 	return "sorry","命令不正确"
 }
@@ -159,6 +166,54 @@ func (cm CommandManage) ConvertRelaivePathToAbsolutePath(vd *VirtualDisk, str st
 			continue
 		}
 	}
+	abstractpath := vd.CurrentFolder.Path
+	var pathliststr string
+	if len(pathlist) == 0 {
+	}else{
+		abstractpath = abstractpath + GetSeparatorChar()
+		pathliststr = strings.Join(pathlist, GetSeparatorChar())
+		abstractpath += pathliststr
+	}
+	return abstractpath
+}
+
+func (cm CommandManage) ConvertRelaivePathToAbsolutePathFile(vd *VirtualDisk, str string) string{ //检查是相对路径还是绝对路径，如果是相对路径就转化为绝对路径
+	strlist := SplitPath(str)
+	for _,v := range strlist{
+		if(v == " "){
+			continue //停留在当前目录
+		}else if(v == ".") {
+			continue
+		}else if(v == ".."){
+			continue
+		}else if(IsExits(v,GetRootDrive())){
+			vd.UpdateCurrentFolder(&vd.RootComponent)
+			break
+		} else{
+			vd. GetChildNodeByName(&vd.RootComponent,v)
+			break
+		}
+	}
+	var pathlist []string
+	for _,value := range strlist{
+		if(value == " "){
+			continue //停留在当前目录
+		}else if(value == ".") {
+			continue
+		}else if(value == ".."){
+			if vd.CurrentFolder.FatherComponent == nil {
+				continue
+			}
+			vd.CurrentFolder = vd.CurrentFolder.FatherComponent //返回上一级目录
+		}else if(IsExits(value,GetRootDrive())){
+			continue
+		} else if value == strlist[len(strlist)-1]{
+			pathlist = append(pathlist, value)
+		}else{
+			pathlist = append(pathlist, value)
+			continue
+		}
+	}
 	abstractpath := vd.CurrentFolder.FatherComponent.Path
 	var pathliststr string
 	if len(pathlist) == 0 {
@@ -168,6 +223,32 @@ func (cm CommandManage) ConvertRelaivePathToAbsolutePath(vd *VirtualDisk, str st
 		abstractpath += pathliststr
 	}
 	return abstractpath
+}
+
+func (cm CommandManage) DirConvert (vd *VirtualDisk, path string) string{
+	var pathlist []string
+	strlist := SplitPath(path)
+	for _,value := range strlist{
+		if(value == ""){
+			continue //停留在当前目录
+		}else if(value == ".") {
+			continue
+		}else if(value == ".."){
+			if vd.CurrentFolder.FatherComponent == nil {
+				continue
+			}
+			vd.CurrentFolder = vd.CurrentFolder.FatherComponent //返回上一级目录
+		}else if(IsExits(value,GetRootDrive())){
+			continue
+		} else if value == strlist[len(strlist)-1]{
+			pathlist = append(pathlist, value)
+		}else{
+			pathlist = append(pathlist, value)
+			continue
+		}
+	}
+	str := strings.Join(pathlist, GetSeparatorChar())
+	return str
 }
 
 func (cm CommandManage) IsSinglePath(path string) bool{

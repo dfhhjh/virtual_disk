@@ -28,48 +28,47 @@ func (vd *VirtualDisk) Execute() {
 	inputstring := commandmanage.CreateCommand()
 	sizeerror := SizeError()
 	invalidcharaerror := InvalidCharactersError()
+	if inputstring == "\n"{
+		vd.Restart()
+	}
 	if !commandmanage.CheckSize(inputstring) { //检查输入字符大小，输入过大则重新输入
 		fmt.Println(sizeerror)
-		vd.Execute()
+		vd.Restart()
 	}
 	if commandmanage.HaveInvalidCharacters(inputstring) { //检查输入有无无效字符，有则重新输入
 		fmt.Println(invalidcharaerror)
-		vd.Execute()
+		vd.Restart()
 	}
 	inputstring = commandmanage.CheckSeparator(inputstring)
 	itd := commandmanage.IsTrueDiskPath(inputstring)
 	hwc := commandmanage.HaveWildCard(inputstring)
 	typ := commandmanage.GetCommandType(itd, hwc)
-	parapath, cmd := commandmanage.SeparateCommand(inputstring)
+	parapath, cmd := commandmanage.SeparateCommand(inputstring, vd)
 	path, para := commandmanage.SeparateParameter(parapath, cmd)
 	singlepath := commandmanage.IsSinglePath(path)
 	havepara := commandmanage.HaveParameter(para)
-	var abspath string
-	if singlepath{
-		abspath = commandmanage.ConvertRelaivePathToAbsolutePath(vd, path)
-	}
 	switch cmd {
 	case dir:
 		var dir Dir
 		dir.CommandExecute(vd, commandmanage, typ, para, singlepath, havepara, path)
 	case md:
 		var md Md
-		md.CommandExecute(vd, typ, abspath)
+		md.CommandExecute(vd, typ, path, commandmanage)
 	case cd:
 		var cd Cd
-		cd.CommandExecute(vd, typ, abspath)
+		cd.CommandExecute(vd, typ, path, commandmanage)
 	case copy:
 		var copy Copy
 		copy.CommandExecute(vd, commandmanage,typ, path)
 	case touch:
 		var touch Touch
-		touch.CommandExecute(vd, typ, abspath)
+		touch.CommandExecute(vd, typ, path, commandmanage)
 	case del:
 		var del Del
-		del.CommandExecute(vd, typ, para, abspath)
+		del.CommandExecute(vd, typ, para, path, commandmanage)
 	case rd:
 		var rd Rd
-		rd.CommandExecute(vd, typ, para, abspath)
+		rd.CommandExecute(vd, typ, para, path, commandmanage)
 	case ren:
 		var ren Ren
 		ren.CommandExecute(vd, commandmanage, typ, path)
@@ -113,3 +112,8 @@ func (vd *VirtualDisk) UpdateCurrentFolder(folder *Component){
 	vd.CurrentFolder = folder
 }
 
+func (vd *VirtualDisk) Restart(){
+	vd.UpdateCurrentFolder(&vd.RootComponent)
+	OutputRootDrive()
+	vd.Execute()
+}

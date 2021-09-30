@@ -16,14 +16,12 @@ func (save Save) CommandExecute(vd *VirtualDisk, path string){
 	f, err := os.Create(path+GetSeparatorChar()+"serialize.txt")
 	if err != nil {
 		fmt.Println(err)
-		return
+		vd.Restart()
 	}
 	sr = sr.SetSerializeRecord(vd.CurrentFolder)
 	sr.SerializeSonMatch(vd.CurrentFolder)
 	b, _ := json.Marshal(sr)
 	f.Write(b)
-	vd.UpdateCurrentFolder(&vd.RootComponent)
-	OutputRootDrive()
-	vd.Execute()
+		vd.Restart()
 	}
 

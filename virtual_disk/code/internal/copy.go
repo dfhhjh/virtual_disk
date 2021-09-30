@@ -10,23 +10,23 @@ func (copy Copy) CommandExecute(vd *VirtualDisk, commandmanage CommandManage,typ
 	pathlist := strings.Split(path, " ")
 	pathone := pathlist[0]
 	pathtwo := pathlist[1]
-	abspathtwo := commandmanage.ConvertRelaivePathToAbsolutePath(vd, pathtwo)
+	abspathtwo := commandmanage.ConvertRelaivePathToAbsolutePathFile(vd, pathtwo)
 	pathelemtwo := SplitPath(abspathtwo)
 	switch typ {
 	case 0:
-		abspathone := commandmanage.ConvertRelaivePathToAbsolutePath(vd, pathone)
+		abspathone := commandmanage.ConvertRelaivePathToAbsolutePathFile(vd, pathone)
 		pathelemone := SplitPath(abspathone)
 		copycomponent = copycomponent.ChangeNode(vd, pathelemone)
 		vd.UpdateCurrentFolder(copycomponent.FatherComponent)
 		if copycomponent.IsFolder == false {
-			addcomponent.AddFile(vd, pathelemtwo, copycomponent)
+			addcomponent.CopyFile(vd, pathelemtwo, copycomponent)
 		}
 	case 1:
 		pathelemone := SplitPath(pathone)
 		strone := pathelemone[len(pathelemone)-1]
 		pathelemone = pathelemone[:len(pathelemone)-1]
 		path = strings.Join(pathelemone, GetSeparatorChar())
-		abspath := commandmanage.ConvertRelaivePathToAbsolutePath(vd, path)
+		abspath := commandmanage.ConvertRelaivePathToAbsolutePathFile(vd, path)
 		pathelemone = SplitPath(abspath)
 		copycomponent = copycomponent.ChangeNode(vd, pathelemone)
 		copycomponent.HwdAddFile(vd, pathelemtwo, strone)
@@ -45,7 +45,5 @@ func (copy Copy) CommandExecute(vd *VirtualDisk, commandmanage CommandManage,typ
 		pathone = strings.Join(pathelemone, GetSeparatorChar())
 		addcomponent.HwdTrueDiskAddFile(vd, lastone, pathone, pathelemtwo)
 	}
-	vd.UpdateCurrentFolder(&vd.RootComponent)
-	OutputRootDrive()
-	vd.Execute()
+	vd.Restart()
 }

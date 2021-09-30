@@ -64,7 +64,7 @@ func (currentnode *Component) DirFile(){
 }
 
 func (currentnode *Component)  MatchSonComponent(vd *VirtualDisk, name string) (bool,*Component) {
-	var node *Component
+	var node = &Component{}
 	for _, val := range currentnode.SonComponent {
 		if IsExits(val.Name, name) {
 			node = val
@@ -76,10 +76,11 @@ func (currentnode *Component)  MatchSonComponent(vd *VirtualDisk, name string) (
 }
 
 func (currentnode *Component) TraverseDir(vd *VirtualDisk){
+	fmt.Println(currentnode.Path,"的目录")
 	if vd.CurrentFolder != &vd.RootComponent{
-		vd.CurrentFolder.DirFolder()
+		currentnode.DirCurrentAndFatherFolder()
 	}
-	for _,v := range vd.CurrentFolder.SonComponent{
+	for _,v := range currentnode.SonComponent{
 		if v.IsFolder{
 			v.DirFolder()
 		}else{
@@ -89,8 +90,9 @@ func (currentnode *Component) TraverseDir(vd *VirtualDisk){
 }
 
 func (currentnode *Component) TraverseDirAd(vd *VirtualDisk){
+	fmt.Println(vd.CurrentFolder.Path,"的目录")
 	if vd.CurrentFolder != &vd.RootComponent{
-		vd.CurrentFolder.DirFolder()
+		currentnode.DirCurrentAndFatherFolder()
 	}
 	for _,v := range vd.CurrentFolder.SonComponent{
 		if v.IsFolder{
@@ -101,15 +103,16 @@ func (currentnode *Component) TraverseDirAd(vd *VirtualDisk){
 }
 
 func (currentnode *Component) TraverseDirS(vd *VirtualDisk)  {
-	if vd.CurrentFolder != &vd.RootComponent{
-		vd.CurrentFolder.DirFolder()
-	}
-	for _,v := range vd.CurrentFolder.SonComponent{
-		if v.IsFolder{
-			vd.UpdateCurrentFolder(v)
-			v.TraverseDirS(vd)
-		}else{
-			v.DirFile()
+	currentnode = vd.CurrentFolder
+	if currentnode.SonComponent == nil{
+		currentnode.TraverseDir(vd)
+	}else{
+		currentnode.TraverseDir(vd)
+		for _,v := range currentnode.SonComponent{
+			if v.IsFolder{
+				vd.UpdateCurrentFolder(v)
+				v.TraverseDirS(vd)
+			}
 		}
 	}
 }
@@ -207,6 +210,33 @@ func (currentnode *Component) ChangeNode(vd *VirtualDisk, pathelement  []string)
 		} else{
 			PathError()
 			vd.Execute()
+		}
+		return changenode
+	}
+	return &vd.RootComponent
+}
+
+func (currentnode *Component) DirChangeNode(vd *VirtualDisk, pathelement  []string) *Component {
+	var changenode = &Component{}
+	changenode = vd.CurrentFolder
+	var match bool
+	for _,v := range pathelement {
+		if v == GetRootDrive() {
+			changenode = &vd.RootComponent
+			continue
+		}
+		if changenode.SonComponent == nil && v != pathelement[len(pathelement)-1] {
+			fmt.Println(PathError())
+			vd.Restart()
+		}
+		match,changenode = changenode.MatchSonComponent(vd, v)
+		if match && v == pathelement[len(pathelement)-1]{
+			return  changenode
+		} else if(match){
+			continue
+		} else{
+			fmt.Println(PathError())
+			vd.Restart()
 		}
 		return changenode
 	}
@@ -336,6 +366,43 @@ func (currentnode *Component) TouchFile(vd *VirtualDisk, pathelement  []string) 
 	}
 }
 
+func (currentnode *Component) LoadFile(vd *VirtualDisk, pathelement  []string, content []byte) {
+	var fathernode *Component
+	var touchnode *Component
+	var match bool
+	for _,v := range pathelement {
+		if v == GetRootDrive() {
+			touchnode = &vd.RootComponent
+			vd.UpdateCurrentFolder(&vd.RootComponent)
+			continue
+		}
+		match, touchnode = touchnode.MatchSonComponent(vd, v)
+		if match && v == pathelement[len(pathelement)-1] {
+			touchnode.Time = GetCurrentTime()
+		}else if match {
+			continue
+		} else {
+			fathernode = vd.CurrentFolder
+			touchnode = touchnode.SetLoadFile(fathernode , v, content)
+		}
+	}
+}
+
+func (currentnode *Component) SetLoadFile(fathernode *Component, name string, content []byte) *Component{
+	var setnode = &Component{}
+	setnode.Name = name
+	setnode.FatherComponent = fathernode
+	setnode.SonComponent = nil
+	fathernode.SonComponent = append(fathernode.SonComponent, setnode)
+	fathernode.Time = GetCurrentTime()
+	setnode.Path = fathernode.Path + GetSeparatorChar() + name
+	setnode.IsFolder = false
+	setnode.Time = GetCurrentTime()
+	setnode.Content = content
+	setnode.FileLength = len(setnode.Content)
+	return setnode
+}
+
 func (currentnode *Component) AddFile(vd *VirtualDisk, pathelement  []string,  node *Component){
 	var fathernode *Component
 	var addnode *Component
@@ -351,6 +418,51 @@ func (currentnode *Component) AddFile(vd *VirtualDisk, pathelement  []string,  n
 			fathernode = vd.CurrentFolder
 			addnode = addnode.SetFile(fathernode, node.Name)
 		}else if(match){
+			continue
+		} else{
+			fmt.Println(PathError())
+		}
+	}
+}
+
+func (currentnode *Component) CopyFile(vd *VirtualDisk, pathelement  []string,  node *Component){
+	var fathernode *Component
+	var addnode *Component
+	var match bool
+	for _,v := range pathelement {
+		if v == GetRootDrive() {
+			addnode = &vd.RootComponent
+			vd.UpdateCurrentFolder(&vd.RootComponent)
+			continue
+		}
+		match, addnode = addnode.MatchSonComponent(vd, v)
+		if match && v == pathelement[len(pathelement)-1] && addnode.IsFolder == true{
+			fathernode = vd.CurrentFolder
+			addnode = addnode.SetFile(fathernode, node.Name)
+		}else if match && v == pathelement[len(pathelement)-1] && addnode.IsFolder == false && v == node.Name {
+			vd.CurrentFolder.Time = GetCurrentTime()
+			addnode.Time = GetCurrentTime()
+		}else if match && v == pathelement[len(pathelement)-1] && addnode.IsFolder == false && v!= node.Name{
+			fmt.Println("是否进行覆盖(y\\n\\all)")
+			var input string
+			fmt.Scan(&input)
+			if input == "y"{
+				addnode.Name = node.Name
+				vd.CurrentFolder.Time = GetCurrentTime()
+				addnode.Time = GetCurrentTime()
+			}else if input == "n"{
+				fathernode = vd.CurrentFolder
+				addnode = addnode.SetFile(fathernode, node.Name)
+			}else if input == "all"{
+				addnode.Name = node.Name
+				vd.CurrentFolder.Time = GetCurrentTime()
+				addnode.Time = GetCurrentTime()
+			}else{
+				fmt.Println("输入错误")
+				vd.Restart()
+			}
+
+		}else if match {
 			continue
 		} else{
 			fmt.Println(PathError())
@@ -381,7 +493,6 @@ func (currentnode *Component) HwdAddFile(vd *VirtualDisk, pathelement  []string,
 		suffixstr := name[posilast +1:len(name)]
 		for i,v := range vd.CurrentFolder.SonComponent{
 			if strings.HasPrefix(v.Name, prestr) && strings.HasSuffix(v.Name,suffixstr) && len(v.Name) == len(name){
-				addnode.AddFile(vd , pathelement , v)
 				if i != 0{
 					var node *Component
 					node.AddFile(vd , pathelement ,v)
@@ -616,8 +727,9 @@ func (currentnode *Component) RemoveComponent(vd *VirtualDisk, pathelement  []st
 				}
 				currentnode = nil
 				vd.UpdateCurrentFolder(nil)
+			}else{
+				continue
 			}
-			continue
 		}else{
 			PathError()
 			vd.Execute()

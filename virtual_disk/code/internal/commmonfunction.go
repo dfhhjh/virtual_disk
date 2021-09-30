@@ -53,3 +53,7 @@ func  SplitPath(cs string) []string{
 	csl := strings.Split(cs,GetSeparatorChar())//字符串转字符串数组
 	return csl
 }
+
+
+
+

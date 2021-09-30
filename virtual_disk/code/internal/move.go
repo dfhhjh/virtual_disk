@@ -12,8 +12,8 @@ func (move Move) CommandExecute(vd *VirtualDisk, commandmanage CommandManage, ty
 	pathlist := strings.Split(path," ")
 	pathone := pathlist[0]
 	pathtwo := pathlist[1]
-	abspathone := commandmanage.ConvertRelaivePathToAbsolutePath(vd, pathone)
-	abspathtwo := commandmanage.ConvertRelaivePathToAbsolutePath(vd, pathtwo)
+	abspathone := commandmanage.ConvertRelaivePathToAbsolutePathFile(vd, pathone)
+	abspathtwo := commandmanage.ConvertRelaivePathToAbsolutePathFile(vd, pathtwo)
 	pathelemone := SplitPath(abspathone)
 	pathelemtwo := SplitPath(abspathtwo)
 	switch typ{
@@ -35,25 +35,18 @@ func (move Move) CommandExecute(vd *VirtualDisk, commandmanage CommandManage, ty
 			}
 			removecomponent.RemoveComponentY(vd, pathelemone)
 		}
-		vd.UpdateCurrentFolder(&vd.RootComponent)
-		OutputRootDrive()
-		vd.Execute()
+
 	case 1:
 		fmt.Println(WildCardError())
 		addcomponent = nil
-		OutputRootDrive()
-		vd.Execute()
 	case 2:
 		fmt.Println(TrueDiskError())
 		addcomponent = nil
-		OutputRootDrive()
-		vd.Execute()
 	case 3:
 		fmt.Println(TrueDiskError())
 		addcomponent = nil
-		OutputRootDrive()
-		vd.Execute()
 	}
+	vd.Restart()
 }
 
 
